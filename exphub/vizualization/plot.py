@@ -66,7 +66,7 @@ class Plot(ABC):
             return [(df, None)]
 
         gs = groupby.df_hyperparams.groupby(groupby.col).groups # Values of the groupby column
-        group2ids = {g: groupby.df_hyperparams.iloc[gs[g]]['sys/id'].to_list() for g in gs}
+        group2ids = {g: groupby.df_hyperparams.loc[gs[g]]['sys/id'].to_list() for g in gs}
         group2series_cols = {g: list(map(lambda x: f'{metric_name}_{x}', group2ids[g])) for g in gs}
         # Return df with only the columns that are in the group. On second position returns the group name
         res = []
