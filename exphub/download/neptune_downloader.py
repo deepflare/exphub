@@ -30,7 +30,7 @@ class NeptuneDownloader(Downloader):
         else:
             self.api_token = api_token
             os.environ[NeptuneDownloader.NEPTUNE_API_TOKEN] = api_token
-        self.project = neptune.init_project(name=self.project_name, mode="read-only", api_token=self.api_token)
+        self.project = neptune.init_project(project=self.project_name, mode="read-only", api_token=self.api_token)
 
     def download(self,
                  id: Optional[Union[str, List[str]]] = None,
