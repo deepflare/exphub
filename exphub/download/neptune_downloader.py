@@ -3,6 +3,7 @@ import pandas as pd
 from typing import Optional, Union, List
 import os
 import neptune.new as neptune
+from exphub.download.experiment import Experiment
 from exphub.utils.noise import Suppressor
 
 class NeptuneDownloader(Downloader):
@@ -36,7 +37,8 @@ class NeptuneDownloader(Downloader):
                  state: Optional[Union[str, List[str]]] = None,
                  owner: Optional[Union[str, List[str]]] = None,
                  tag: Optional[Union[str, List[str]]] = None,
-                 columns: Optional[List[str]] = None) -> pd.DataFrame:
+                 columns: Optional[List[str]] = None,
+                 series: List[str] = []) -> pd.DataFrame:
         """Download a table of runs from a Neptune project.
 
         Args:
@@ -51,8 +53,12 @@ class NeptuneDownloader(Downloader):
         """
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
-        output = Suppressor.exec_no_stdout(self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
-        return output
+        df_meta = Suppressor.exec_no_stdout(self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
+        dfs_series = {}
+        for series_col in series:
+            dfs_series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+        
+        return Experiment(df_meta, dfs_series)
         
     def download_series(self,
                         series_column: Union[List[str], str],
