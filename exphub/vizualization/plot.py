@@ -6,7 +6,7 @@ from typing import Iterable, List, Optional, Set, Union
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-
+from exphub.aggregators.aggregators import Vault
 from exphub.aggregators.aggregators import AggregatorChain
 
 
@@ -28,7 +28,17 @@ class Series:
 
 
 class Plot(ABC):
-    def __init__(self, dfs_series: Union[Series, Iterable[Series]], aggs: AggregatorChain = None, groupby: Grouping = None):
+    def __init__(self, dfs_series: Union[Series, Iterable[Series]], aggs: AggregatorChain = None, groupby: Grouping = None, meta_df: pd.DataFrame = None):
+        if aggs is None:
+            if groupby is not None:
+                raise ValueError('If groupby is provided, aggs must also be provided.')
+            
+            if meta_df is None:
+                raise ValueError('If one wants to perform per-run plot, meta_df must be provided.')
+            
+            groupby = Grouping(meta_df, 'sys/id', 'id')
+            aggs = Vault.MEAN
+        
         _dfs_series = [dfs_series] if isinstance(dfs_series, Series) else dfs_series
         
         for series in _dfs_series:
