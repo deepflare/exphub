@@ -3,7 +3,7 @@ import pandas as pd
 from typing import Optional, Union, List
 import os
 import neptune.new as neptune
-
+from exphub.utils.noise import Suppressor
 
 class NeptuneDownloader(Downloader):
     NEPTUNE_API_TOKEN = 'NEPTUNE_API_TOKEN'
@@ -51,8 +51,9 @@ class NeptuneDownloader(Downloader):
         """
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
-        return self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
-
+        output = Suppressor.exec_no_stdout(self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
+        return output
+        
     def download_series(self,
                         series_column: Union[List[str], str],
                         id: Optional[Union[str, List[str]]] = None,
@@ -75,12 +76,11 @@ class NeptuneDownloader(Downloader):
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
 
-        ids = self.project.fetch_runs_table(
-            owner=owner, id=id, state=state, tag=tag, columns='sys/id').to_pandas()['sys/id'].values
+        ids = Suppressor.exec_no_stdout(self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag, columns='sys/id').to_pandas()['sys/id'].values
 
         # Run initialization
         runs = [
-            neptune.init_run(project=self.project_name, with_id=run_id, mode="read-only", api_token=self.api_token)
+            Suppressor.exec_no_stdout(neptune.init_run, project=self.project_name, with_id=run_id, mode="read-only", api_token=self.api_token)
             for run_id in ids
         ]
 
@@ -95,7 +95,8 @@ class NeptuneDownloader(Downloader):
             missing = 0
             for id, run in zip(ids, runs):
                 try:
-                    id2value[id] = run[col_label].fetch_values(include_timestamp=False)
+                    
+                    id2value[id] = Suppressor.exec_no_stdout(run[col_label].fetch_values, include_timestamp=False)
                 except neptune.exceptions.NeptuneException:
                     print(f'[WARNING] Run {id} does not have a column named {col_label}')
                     missing += 1
