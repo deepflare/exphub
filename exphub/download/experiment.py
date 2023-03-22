@@ -12,6 +12,10 @@ class Experiment:
         df_meta = self.df_meta.copy()
         for fn in conditions:
             df_meta = df_meta[fn(df_meta)]
+            
+        # If no rows left, return empty experiment
+        if len(df_meta) == 0:
+            return Experiment(pd.DataFrame(), {})
         
         # Filter series columns only if they are present in the meta df
         dfs_series = {}
@@ -39,4 +43,8 @@ class Experiment:
             for col, val in zip(columns, values):
                 experiment = experiment.filter_via_hyperparams([lambda df: df[col] == val])
             splits[split_describtion] = experiment
+            
+        # Final filtering to remove empty experiments
+        splits = {k: v for k, v in splits.items() if len(v.df_meta) > 0}
+        
         return splits
