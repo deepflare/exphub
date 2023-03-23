@@ -111,5 +111,3 @@ class Vault:
     MEDIAN = AggregatorChain([Aggregator(lambda x: x.median(axis=1, numeric_only=True), 'median')])
     VAR = AggregatorChain([Aggregator(lambda x: x.var(axis=1, numeric_only=True), 'var')])
     STD = AggregatorChain([Aggregator(lambda x: x.std(axis=1, numeric_only=True), 'std')])
-
-    
