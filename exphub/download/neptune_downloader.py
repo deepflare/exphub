@@ -8,20 +8,16 @@ from exphub.utils.noise import Suppressor
 
 
 class NeptuneDownloader(Downloader):
+    """
+    A NeptuneDownloader class for downloading experiment data from Neptune.ai.
+
+    Attributes:
+        project_name (str): The name of the Neptune project.
+        api_token (Optional[str]): The Neptune API token. If not provided, it should be set as an environment variable.
+    """
     NEPTUNE_API_TOKEN = 'NEPTUNE_API_TOKEN'
 
     def __init__(self, project_name: str, api_token: Optional[str] = None):
-        """Initialize a NeptuneDownloader instance.
-
-        Args:
-            project_name (str): The name of the Neptune project to download data from.
-            api_token (Optional[str], optional): The API token for the Neptune project. If not provided,
-                the method will attempt to use the `NEPTUNE_API_TOKEN` environment variable. Defaults to None.
-
-        Raises:
-            ValueError: If the `api_token` argument is not provided and the `NEPTUNE_API_TOKEN` environment variable
-                is not set.
-        """
         self.api_token = api_token
         self.project_name = project_name
         if self.api_token is None:
@@ -41,6 +37,21 @@ class NeptuneDownloader(Downloader):
                  columns: Optional[List[str]] = None,
                  recursive_param_names: Optional[List[str]] = None,
                  series: List[str] = []) -> Experiment:
+        """
+        Downloads experiment data from Neptune.ai based on specified filtering criteria.
+
+        Args:
+            id (Optional[Union[str, List[str]]]): The run ID(s) to filter by.
+            state (Optional[Union[str, List[str]]]): The run state(s) to filter by.
+            owner (Optional[Union[str, List[str]]]): The run owner(s) to filter by.
+            tag (Optional[Union[str, List[str]]]): The run tag(s) to filter by.
+            columns (Optional[List[str]]): A list of columns to include in the result.
+            recursive_param_names (Optional[List[str]]): A list of recursive parameter names to include in the result.
+            series (List[str]): A list of series to download.
+
+        Returns:
+            Experiment: An Experiment instance containing the downloaded data.
+        """
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         df_meta = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
@@ -70,24 +81,24 @@ class NeptuneDownloader(Downloader):
                         state: Optional[Union[str, List[str]]] = None,
                         owner: Optional[Union[str, List[str]]] = None,
                         tag: Optional[Union[str, List[str]]] = None) -> pd.DataFrame:
-        """Download a table of runs from a Neptune project.
+        """
+        Downloads a specified series of data from Neptune.ai based on filtering criteria.
 
         Args:
-            series_column (str): The name of the series column to download.
-            id (Optional[Union[str, List[str]]]): A list of run IDs or a single run ID to filter the results by.
-            state (Optional[Union[str, List[str]]]): A list of run states or a single run state to filter the results by.
-            owner (Optional[Union[str, List[str]]]): A list of run owners or a single run owner to filter the results by.
-            tag (Optional[Union[str, List[str]]]): A list of run tags or a single run tag to filter the results by.
-            columns (Optional[List[str]]): A list of columns to include in the resulting table.
+            series_column (Union[List[str], str]): The name of the series to download.
+            id (Optional[Union[str, List[str]]]): The run ID(s) to filter by.
+            state (Optional[Union[str, List[str]]]): The run state(s) to filter by.
+            owner (Optional[Union[str, List[str]]]): The run owner(s) to filter by.
+            tag (Optional[Union[str, List[str]]]): The run tag(s) to filter by.
 
         Returns:
-            pd.DataFrame: A Pandas DataFrame containing the resulting table of runs.
+            pd.DataFrame: A pandas DataFrame containing the downloaded series data.
         """
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
 
-        ids = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag,
-            columns='sys/id').to_pandas()['sys/id'].values
+        ids = self.project.fetch_runs_table(
+            owner=owner, id=id, state=state, tag=tag, columns='sys/id').to_pandas()['sys/id'].values
 
         # Run initialization
         runs = [

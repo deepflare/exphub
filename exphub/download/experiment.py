@@ -6,10 +6,26 @@ import pandas as pd
 
 @dataclass
 class Experiment:
+    """
+    A class representing an experiment with its parameters and series.
+
+    Attributes:
+        params (pd.DataFrame): A DataFrame containing the parameters of the experiment.
+        series (Dict[str, pd.DataFrame]): A dictionary mapping metric names to DataFrames.
+    """
     params: pd.DataFrame
     series: field(default_factory=dict)  # metric_name -> df
 
     def filter_via_hyperparams(self, conditions: list) -> 'Experiment':
+        """
+        Filters the experiment based on the given conditions.
+
+        Args:
+            conditions (list): A list of functions to filter the experiment's parameters.
+
+        Returns:
+            Experiment: A new Experiment instance with filtered parameters and series.
+        """
         df_meta = self.params.copy()
         for fn in conditions:
             df_meta = df_meta[fn(df_meta)]
@@ -34,6 +50,15 @@ class Experiment:
         return Experiment(df_meta, series)
 
     def split_by_columns(self, columns: List[str]) -> Dict[str, 'Experiment']:
+        """
+        Splits the experiment into sub-experiments based on unique combinations of values in the specified columns.
+
+        Args:
+            columns (List[str]): A list of column names to split the experiment by.
+
+        Returns:
+            Dict[str, Experiment]: A dictionary mapping split descriptions to sub-experiments.
+        """
         unique_values_by_columns = {col: self.params[col].unique() for col in columns}
         splits = {}
         import copy
