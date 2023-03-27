@@ -34,24 +34,27 @@ class Wizard(ABC):
     def render(self, **kwargs):
         pass
 
-    @classmethod
-    def set_default_renderer(cls, renderer):
-        pio.renderers.default = renderer
-
 
 class TableWizard(Wizard):
 
-    def __init__(self, df: pd.DataFrame, params_color: str = 'cadetblue', metrics_color: str = 'silver'):
+    def __init__(self, df: pd.DataFrame, attributes_color: str = 'cadetblue', series_color: str = 'silver'):
         self._df = df
-        self._params_color = params_color
-        self._metrics_color = metrics_color
+        self.attributes_color = attributes_color
+        self.series_color = series_color
 
-    def render(self, params: list = None, metrics: list = None):
-        self._df.style.set_properties(**{'background-color': self._params_color}, subset=params)
-        self._df.style.set_properties(**{'background-color': self._metrics_color}, subset=metrics)
+    def render(self, attributes: list = None, series: list = None):
+        return self._df.style.set_properties(
+            **{
+                'background-color': self.attributes_color
+            }, subset=attributes).set_properties(
+                **{'background-color': self.series_color}, subset=series)
 
 
 class SeriesWizard(Wizard):
+
+    @classmethod
+    def set_default_renderer(cls, renderer):
+        pio.renderers.default = renderer
 
     def __init__(self,
                  series: Union[Series, Iterable[Series]],

@@ -43,11 +43,10 @@ class NeptuneDownloader(Downloader):
                  series: List[str] = []) -> Experiment:
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
-        df_meta = Suppressor.exec_no_stdout(
-            self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
-        series = {}
+        df_meta = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
+        dfs_series = {}
         for series_col in series:
-            series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+            dfs_series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
 
         self.recursive_param_names = recursive_param_names
 
@@ -63,7 +62,7 @@ class NeptuneDownloader(Downloader):
                 })
                 df_meta[param_short_name] = df_meta_recursive[param_short_name]
 
-        return Experiment(df_meta, series)
+        return Experiment(df_meta, dfs_series)
 
     def download_series(self,
                         series_column: Union[List[str], str],
@@ -99,7 +98,6 @@ class NeptuneDownloader(Downloader):
         ]
 
         def _fetch_values(col_label):
-            print('Fetching values for column', col_label)
             if isinstance(col_label, list):
                 assert len(col_label) == 1
                 col_label = col_label[0]
@@ -109,7 +107,6 @@ class NeptuneDownloader(Downloader):
             missing = 0
             for id, run in zip(ids, runs):
                 try:
-
                     id2value[id] = Suppressor.exec_no_stdout(run[col_label].fetch_values, include_timestamp=False)
                 except neptune.exceptions.NeptuneException:
                     print(f'[WARNING] Run {id} does not have a column named {col_label}')
@@ -118,7 +115,6 @@ class NeptuneDownloader(Downloader):
                 raise ValueError(f'No runs have a column named {col_label}')
 
             df = pd.DataFrame({})
-
             for id, value in id2value.items():
                 df[f'{col_label}_{id}'] = value['value']
 
