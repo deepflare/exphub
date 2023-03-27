@@ -86,8 +86,7 @@ class NeptuneDownloader(Downloader):
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
 
-        ids = Suppressor.exec_no_stdout(
-            self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag,
+        ids = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag,
             columns='sys/id').to_pandas()['sys/id'].values
 
         # Run initialization
