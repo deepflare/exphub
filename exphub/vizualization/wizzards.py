@@ -37,7 +37,7 @@ class Wizard(ABC):
 
 class TableWizard(Wizard):
 
-    def __init__(self, df: pd.DataFrame, attributes_color: str = 'cadetblue', series_color: str = 'silver'):
+    def __init__(self, df: pd.DataFrame, attributes_color: str = '#211b1b', series_color: str = '#022b11'):
         self._df = df
         self.attributes_color = attributes_color
         self.series_color = series_color
