@@ -16,6 +16,26 @@ class Experiment:
     params: pd.DataFrame
     series: field(default_factory=dict)  # metric_name -> df
 
+    @property
+    def series_names(self) -> List[str]:
+        """
+        Returns the names of the series.
+
+        Returns:
+            List[str]: A list of the names of the series.
+        """
+        return list(self.series.keys())
+
+    @property
+    def attributes_names(self) -> List[str]:
+        """
+        Returns the names of the attributes.
+
+        Returns:
+            List[str]: A list of the names of the attributes.
+        """
+        return [c for c in self.params.columns if c not in self.series_names]
+
     def filter_via_hyperparams(self, conditions: list) -> 'Experiment':
         """
         Filters the experiment based on the given conditions.
