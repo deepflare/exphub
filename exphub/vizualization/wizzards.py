@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Iterable, Optional, Union
+from abc import ABC, abstractmethod
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -27,10 +28,33 @@ class Series:
     smoothing: int = 1
 
 
-class Plot:
+class Wizard(ABC):
+
+    @abstractmethod
+    def render(self, **kwargs):
+        pass
+
+    @classmethod
+    def set_default_renderer(cls, renderer):
+        pio.renderers.default = renderer
+
+
+class TableWizard(Wizard):
+
+    def __init__(self, df: pd.DataFrame, params_color: str = 'cadetblue', metrics_color: str = 'silver'):
+        self._df = df
+        self._params_color = params_color
+        self._metrics_color = metrics_color
+
+    def render(self, params: list = None, metrics: list = None):
+        self._df.style.set_properties(**{'background-color': self._params_color}, subset=params)
+        self._df.style.set_properties(**{'background-color': self._metrics_color}, subset=metrics)
+
+
+class SeriesWizard(Wizard):
 
     def __init__(self,
-                 dfs_series: Union[Series, Iterable[Series]],
+                 series: Union[Series, Iterable[Series]],
                  aggs: AggregatorChain = None,
                  groupby: Grouping = None,
                  meta_df: pd.DataFrame = None):
@@ -44,23 +68,23 @@ class Plot:
             groupby = Grouping(meta_df, 'sys/id', 'id')
             aggs = Vault.MEAN
 
-        _dfs_series = [dfs_series] if isinstance(dfs_series, Series) else dfs_series
+        _series = [series] if isinstance(series, Series) else series
 
-        for series in _dfs_series:
+        for series in _series:
             series._metric = ''.join(series.df.columns[0].split('_')[:-1])
 
         self._subplots = [(df_.subtitle, df_.xaxis_title, df_.yaxis_title, df_.aggregators_title,
                            self._generate_go_figures(df_.df, aggs, groupby, df_.smoothing), df_._metric)
-                          for df_ in _dfs_series]
+                          for df_ in _series]
 
         self._init_rendering()
 
     def _init_rendering(self):
         pio.renderers.default = "jpg"
 
-    def _generate_go_figures(self, df_series, aggs: AggregatorChain, groupby: Grouping, smoothing: int):
-        metric_name = ''.join(df_series.columns[0].split('_')[:-1])
-        dfs = self._groupby(df_series, metric_name, groupby)
+    def _generate_go_figures(self, series, aggs: AggregatorChain, groupby: Grouping, smoothing: int):
+        metric_name = ''.join(series.columns[0].split('_')[:-1])
+        dfs = self._groupby(series, metric_name, groupby)
         dfs = list(map(lambda x: (aggs(x[0]), x[1]), dfs))
 
         go_figs = []

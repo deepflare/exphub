@@ -45,16 +45,16 @@ class NeptuneDownloader(Downloader):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         df_meta = Suppressor.exec_no_stdout(
             self.project.fetch_runs_table, owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
-        dfs_series = {}
+        series = {}
         for series_col in series:
-            dfs_series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+            series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
 
         self.recursive_param_names = recursive_param_names
 
         if recursive_param_names is not None:
             for param_name in recursive_param_names:
                 param_short_name = param_name.split('/')[-1]
-                param_id_value = self.df_meta[param_name].to_list()
+                param_id_value = self.params[param_name].to_list()
 
                 df_meta_recursive = pd.DataFrame({
                     param_short_name: [
@@ -63,7 +63,7 @@ class NeptuneDownloader(Downloader):
                 })
                 df_meta[param_short_name] = df_meta_recursive[param_short_name]
 
-        return Experiment(df_meta, dfs_series)
+        return Experiment(df_meta, series)
 
     def download_series(self,
                         series_column: Union[List[str], str],
