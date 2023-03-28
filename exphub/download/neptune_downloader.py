@@ -5,7 +5,7 @@ import os
 import neptune.new as neptune
 from exphub.download.experiment import Experiment
 from exphub.utils.noise import Suppressor
-
+from exphub.utils.paths import shorten_paths
 
 class NeptuneDownloader(Downloader):
     """
@@ -18,6 +18,21 @@ class NeptuneDownloader(Downloader):
     NEPTUNE_API_TOKEN = 'NEPTUNE_API_TOKEN'
 
     def __init__(self, project_name: str, api_token: Optional[str] = None):
+        """
+        Download experiment data from Neptune.ai with the specified filters and settings.
+
+        Args:
+            id (Optional[Union[str, List[str]]]): A list of experiment IDs to download.
+            state (Optional[Union[str, List[str]]]): A list of experiment states to download.
+            owner (Optional[Union[str, List[str]]]): A list of experiment owners to download.
+            tag (Optional[Union[str, List[str]]]): A list of experiment tags to download.
+            attributes (Optional[List[str]]): A list of experiment attributes to download.
+            short_names (bool): Whether to shorten the column names in the resulting data. Defaults to True.
+            series (List[str]): A list of experiment series to download.
+
+        Returns:
+            Experiment: An Experiment object containing the downloaded data.
+        """
         self.api_token = api_token
         self.project_name = project_name
         if self.api_token is None:
@@ -34,45 +49,31 @@ class NeptuneDownloader(Downloader):
                  state: Optional[Union[str, List[str]]] = None,
                  owner: Optional[Union[str, List[str]]] = None,
                  tag: Optional[Union[str, List[str]]] = None,
-                 columns: Optional[List[str]] = None,
-                 recursive_param_names: Optional[List[str]] = None,
+                 attributes: Optional[List[str]] = None,
+                 short_names: bool = True,
                  series: List[str] = []) -> Experiment:
-        """
-        Downloads experiment data from Neptune.ai based on specified filtering criteria.
-
-        Args:
-            id (Optional[Union[str, List[str]]]): The run ID(s) to filter by.
-            state (Optional[Union[str, List[str]]]): The run state(s) to filter by.
-            owner (Optional[Union[str, List[str]]]): The run owner(s) to filter by.
-            tag (Optional[Union[str, List[str]]]): The run tag(s) to filter by.
-            columns (Optional[List[str]]): A list of columns to include in the result.
-            recursive_param_names (Optional[List[str]]): A list of recursive parameter names to include in the result.
-            series (List[str]): A list of series to download.
-
-        Returns:
-            Experiment: An Experiment instance containing the downloaded data.
-        """
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
+        columns = [*attributes, *series]
         df_meta = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
         dfs_series = {}
         for series_col in series:
             dfs_series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
 
-        self.recursive_param_names = recursive_param_names
+        self.short_names = short_names
 
-        if recursive_param_names is not None:
-            for param_name in recursive_param_names:
-                param_short_name = param_name.split('/')[-1]
-                param_id_value = self.params[param_name].to_list()
-
-                df_meta_recursive = pd.DataFrame({
-                    param_short_name: [
-                        Suppressor.exec_no_stdout(self.project.fetch_runs_table, id=v) for v in param_id_value
-                    ]
-                })
-                df_meta[param_short_name] = df_meta_recursive[param_short_name]
-
+        if short_names:
+            # Modify df_meta in place
+            meta_long2short = shorten_paths(df_meta)
+            df_meta.rename(columns=meta_long2short, inplace=True)
+            
+            # Modify dfs_series in place
+            short_df_series = {}
+            for series_col, df in dfs_series.items():
+                long2short = shorten_paths(df)
+                short_df_series[meta_long2short[series_col]] = df.rename(columns=long2short)
+            dfs_series = short_df_series
+            
         return Experiment(df_meta, dfs_series)
 
     def download_series(self,

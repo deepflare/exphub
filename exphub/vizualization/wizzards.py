@@ -141,7 +141,7 @@ class SeriesWizard(Wizard):
             if meta_df is None:
                 raise ValueError('If one wants to perform per-run plot, meta_df must be provided.')
 
-            groupby = Grouping(meta_df, 'sys/id', 'id')
+            groupby = Grouping(meta_df, 'sys/id', 'id') if 'sys/id' in meta_df.columns else Grouping(meta_df, 'id')
             aggs = Vault.MEAN
 
         _series = [series] if isinstance(series, Series) else series
@@ -221,7 +221,8 @@ class SeriesWizard(Wizard):
             return [(df, None)]
 
         gs = groupby.df_hyperparams.groupby(groupby.col).groups  # Values of the groupby column
-        group2ids = {g: groupby.df_hyperparams.loc[gs[g]]['sys/id'].to_list() for g in gs}
+        id_col_name = 'sys/id' if 'sys/id' in df.columns else 'id'
+        group2ids = {g: groupby.df_hyperparams.loc[gs[g]][id_col_name].to_list() for g in gs}
         group2series_cols = {g: list(map(lambda x: f'{metric_name}_{x}', group2ids[g])) for g in gs}
         # Return df with only the columns that are in the group. On second position returns the group name
         res = []

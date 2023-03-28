@@ -16,6 +16,9 @@ class Experiment:
     params: pd.DataFrame
     series: field(default_factory=dict)  # metric_name -> df
 
+    def __str__(self) -> str:
+        return f'Experiment Instance\n{len(self.params)} parameters: {self.params_names}\n including...\n\t * Attributes: {self.attributes_names}\n\t * Series: {self.series_names}'
+
     @property
     def series_names(self) -> List[str]:
         """
@@ -35,6 +38,26 @@ class Experiment:
             List[str]: A list of the names of the attributes.
         """
         return [c for c in self.params.columns if c not in self.series_names]
+    
+    @property
+    def params_names(self) -> List[str]:
+        """
+        Returns the names of the parameters.
+
+        Returns:
+            List[str]: A list of the names of the parameters.
+        """
+        return self.params.columns.tolist()
+    
+    @property
+    def id_column_name(self) -> str:
+        """
+        Returns the name of the ID column.
+
+        Returns:
+            str: The name of the ID column.
+        """
+        return 'sys/id' if 'sys/id' in self.params.columns else 'id'
 
     def filter_via_hyperparams(self, conditions: list) -> 'Experiment':
         """
@@ -56,13 +79,17 @@ class Experiment:
 
         # Filter series columns only if they are present in the meta df
         series = {}
+        
+        # Shorten compatibility
+        id_col = 'sys/id' if 'sys/id' in df_meta.columns else 'id'
+        
         for metric_name, df in self.series.items():
             # Initialize new series from index
             new_series = pd.DataFrame(index=df.index)
             new_series.index.name = df.index.name
 
             for col in df.columns:
-                if col.split('_')[-1] in df_meta['sys/id'].values:
+                if col.split('_')[-1] in df_meta[id_col].values:
                     new_series[col] = df[col].copy()
 
             series[metric_name] = new_series
