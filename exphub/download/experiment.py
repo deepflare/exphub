@@ -38,7 +38,7 @@ class Experiment:
             List[str]: A list of the names of the attributes.
         """
         return [c for c in self.params.columns if c not in self.series_names]
-    
+
     @property
     def params_names(self) -> List[str]:
         """
@@ -48,7 +48,7 @@ class Experiment:
             List[str]: A list of the names of the parameters.
         """
         return self.params.columns.tolist()
-    
+
     @property
     def id_column_name(self) -> str:
         """
@@ -79,10 +79,10 @@ class Experiment:
 
         # Filter series columns only if they are present in the meta df
         series = {}
-        
+
         # Shorten compatibility
         id_col = 'sys/id' if 'sys/id' in df_meta.columns else 'id'
-        
+
         for metric_name, df in self.series.items():
             # Initialize new series from index
             new_series = pd.DataFrame(index=df.index)

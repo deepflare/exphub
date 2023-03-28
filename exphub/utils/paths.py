@@ -12,12 +12,15 @@ def find_longest_common_suffix(all_paths, current_path):
     max_common_suffix_length = 1
     paths = [path for path in all_paths if path != current_path]
     for i in range(1, len(current_path.split('/'))):
-        if any('/'.join((path.split('/')[-i:])) == '/'.join(current_path.split('/')[-i:]) for path in paths if len(path.split('/')) >= i):
+        if any('/'.join((path.split('/')[-i:])) == '/'.join(current_path.split('/')[-i:])
+               for path in paths
+               if len(path.split('/')) >= i):
             max_common_suffix_length += 1
         else:
             break
 
     return max_common_suffix_length
+
 
 def shorten_paths(paths):
     """

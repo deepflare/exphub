@@ -7,6 +7,7 @@ from exphub.download.experiment import Experiment
 from exphub.utils.noise import Suppressor
 from exphub.utils.paths import shorten_paths
 
+
 class NeptuneDownloader(Downloader):
     """
     A NeptuneDownloader class for downloading experiment data from Neptune.ai.
@@ -66,14 +67,14 @@ class NeptuneDownloader(Downloader):
             # Modify df_meta in place
             meta_long2short = shorten_paths(df_meta)
             df_meta.rename(columns=meta_long2short, inplace=True)
-            
+
             # Modify dfs_series in place
             short_df_series = {}
             for series_col, df in dfs_series.items():
                 long2short = shorten_paths(df)
                 short_df_series[meta_long2short[series_col]] = df.rename(columns=long2short)
             dfs_series = short_df_series
-            
+
         return Experiment(df_meta, dfs_series)
 
     def download_series(self,
