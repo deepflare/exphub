@@ -9,6 +9,8 @@ from exphub.aggregators.aggregators import Vault
 from exphub.aggregators.aggregators import AggregatorChain
 import plotly.io as pio
 
+from exphub.download.experiment import Experiment
+
 
 @dataclass
 class Grouping:
@@ -59,36 +61,16 @@ class Wizard(ABC):
 
 
 class TableWizard(Wizard):
-    """
-    A class for creating a table visualization.
 
-    Attributes:
-        _df (pd.DataFrame): A DataFrame containing the table data.
-        attributes_color (str): The color for attributes cells. Defaults to '#211b1b'.
-        series_color (str): The color for series cells. Defaults to '#022b11'.
-    """
-
-    def __init__(self, df: pd.DataFrame, attributes_color: str = '#211b1b', series_color: str = '#022b11'):
-        self._df = df
-        self.attributes_color = attributes_color
-        self.series_color = series_color
-
-    def render(self, attributes: list = None, series: list = None):
-        """
-        Renders the table visualization with optional custom attribute and series colors.
-
-        Args:
-            attributes (list, optional): A list of attributes for the table.
-            series (list, optional): A list of series for the table.
-
-        Returns:
-            pd.DataFrame.style: The styled table DataFrame.
-        """
-        return self._df.style.set_properties(
+    def __init__(self, experiment: Experiment):
+        self.experiment = experiment
+        
+    def render(self, attributes_color: str = '#211b1b', series_color: str = '#022b11'):
+        return self.experiment.params.style.set_properties(
             **{
-                'background-color': self.attributes_color
-            }, subset=attributes).set_properties(
-                **{'background-color': self.series_color}, subset=series)
+                'background-color': attributes_color
+            }, subset=self.experiment.attributes_names).set_properties(
+                **{'background-color': series_color}, subset=self.experiment.series_names)
 
 
 class SeriesWizard(Wizard):
@@ -142,7 +124,7 @@ class SeriesWizard(Wizard):
                 raise ValueError('If one wants to perform per-run plot, meta_df must be provided.')
 
             groupby = Grouping(meta_df, 'sys/id', 'id') if 'sys/id' in meta_df.columns else Grouping(meta_df, 'id')
-            aggs = Vault.MEAN
+            aggs = Vault._NO_AGGR
 
         _series = [series] if isinstance(series, Series) else series
 
