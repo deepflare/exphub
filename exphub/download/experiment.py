@@ -3,6 +3,7 @@ from itertools import product
 from typing import Dict, List
 import pandas as pd
 
+
 @dataclass
 class Experiment:
     """
@@ -18,7 +19,7 @@ class Experiment:
     def __str__(self) -> str:
         return f'Experiment Instance\n{len(self.params)} parameters: {self.params_names}\n including...\n\t * Attributes: {self.attributes_names}\n\t * Series: {self.series_names}'
 
-    def subset(self, params_names_to_keep: List[str]) -> 'Experiment':
+    def subset_params(self, params_names_to_keep: List[str]) -> 'Experiment':
         """
         Returns a new Experiment instance with a subset of the parameters.
 
@@ -30,20 +31,33 @@ class Experiment:
         """
         attributes_params = [p for p in params_names_to_keep if p in self.attributes_names]
         series_params = [p for p in params_names_to_keep if p in self.series_names]
-        
+
         if any((p not in self.params_names and p not in self.attributes_names) for p in params_names_to_keep):
             raise ValueError(f'Invalid parameter name. Valid names are {self.params_names}')
-        
+
         new_series = {s: self.series[s] for s in series_params}
         new_params = self.params[attributes_params + series_params]
-        
+
         return Experiment(new_params, new_series)
-    
-    
+
+    def subset_runs(self, runs_ids_to_keep: List[str]) -> 'Experiment':
+        """
+        Returns a new Experiment instance with a subset of the runs.
+
+        Args:
+            runs_ids_to_keep (List[str]): A list of the IDs of the runs to keep.
+
+        Returns:
+            Experiment: A new Experiment instance with a subset of the runs.
+        """
+        new_params = self.params[self.params[self.id_column_name].isin(runs_ids_to_keep)]
+        new_series = {s: self.series[s].loc[runs_ids_to_keep] for s in self.series_names}
+
+        return Experiment(new_params, new_series)
+
     def without(self, params_names_to_drop: List[str]) -> 'Experiment':
         all_params = self.params_names
         return self.subset([p for p in all_params if p not in params_names_to_drop])
-        
 
     @property
     def series_names(self) -> List[str]:

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Iterable, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -64,7 +64,7 @@ class TableWizard(Wizard):
 
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
-        
+
     def render(self, attributes_color: str = '#211b1b', series_color: str = '#022b11'):
         return self.experiment.params.style.set_properties(
             **{
@@ -74,6 +74,15 @@ class TableWizard(Wizard):
 
 
 class SeriesWizard(Wizard):
+
+    def __init__(self, experiment: Experiment):
+        self.experiment = experiment
+
+    def render(self, title: str, options: Optional[Dict[str, Any]] = None):
+        pass
+
+
+class SeriesWizardLegacy(Wizard):
     """
     A class used to generate plotly visualizations from a given set of data series.
 
