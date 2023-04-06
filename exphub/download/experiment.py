@@ -51,13 +51,13 @@ class Experiment:
             Experiment: A new Experiment instance with a subset of the runs.
         """
         new_params = self.params[self.params[self.id_column_name].isin(runs_ids_to_keep)]
-        new_series = {s: self.series[s].loc[runs_ids_to_keep] for s in self.series_names}
+        new_series = {s: self.series[s][runs_ids_to_keep] for s in self.series_names}
 
         return Experiment(new_params, new_series)
 
     def without(self, params_names_to_drop: List[str]) -> 'Experiment':
         all_params = self.params_names
-        return self.subset([p for p in all_params if p not in params_names_to_drop])
+        return self.subset_params([p for p in all_params if p not in params_names_to_drop])
 
     @property
     def series_names(self) -> List[str]:
