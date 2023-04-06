@@ -59,7 +59,7 @@ class NeptuneDownloader(Downloader):
         df_meta = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
         dfs_series = {}
         for series_col in series:
-            dfs_series[series_col] = self.download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+            dfs_series[series_col] = self._download_series(series_col, id=id, state=state, owner=owner, tag=tag)
 
         self.short_names = short_names
 
@@ -77,7 +77,7 @@ class NeptuneDownloader(Downloader):
 
         return Experiment(df_meta, dfs_series)
 
-    def download_series(self,
+    def _download_series(self,
                         series_column: Union[List[str], str],
                         id: Optional[Union[str, List[str]]] = None,
                         state: Optional[Union[str, List[str]]] = None,
@@ -128,15 +128,8 @@ class NeptuneDownloader(Downloader):
 
             df = pd.DataFrame({})
             for id, value in id2value.items():
-                df[f'{col_label}_{id}'] = value['value']
+                df[id] = value['value']
 
             return df
 
-        if isinstance(series_column, str) or len(series_column) == 1:
-            return _fetch_values(series_column)
-        else:
-            assert isinstance(series_column, list)
-            dfs = [_fetch_values(col_label) for col_label in series_column]
-            df = dfs[0]
-            for d in dfs[1:]:
-                df = df.join(d)
+        return _fetch_values(series_column)

@@ -78,9 +78,37 @@ class SeriesWizard(Wizard):
     def __init__(self, experiment: Experiment):
         self.experiment = experiment
 
-    def render(self, title: str, options: Optional[Dict[str, Any]] = None):
-        pass
+    def render(self):
+        if len(self.experiment.series_names) == 0:
+            raise ValueError('No series to plot.')
+        
+        if len(self.experiment.series_names) > 1:
+            return self._render_multiple_series()
+        
+        return self._render_single_series()
 
+    def _render_single_series(self):
+        fig = go.Figure()
+        metric_name = self._infer_metric_name(self.experiment.series_names[0])
+                
+        xaxis_title = 'step'
+        yaxis_title = metric_name
+        title = f'{yaxis_title} per {xaxis_title}'
+        
+        # subtitle = 
+        fig.add_traces(go_figs)
+        fig.update_layout(
+            title=title,
+            xaxis_title=xaxis_title,
+            yaxis_title=metric_name,
+            legend_title='runs')
+    
+    def _render_multiple_series(self):
+        pass
+    
+    def _infer_metric_name(self, series_name: str):
+        return '_'.join(series_name.split('_')[:-1])
+    
 
 class SeriesWizardLegacy(Wizard):
     """
