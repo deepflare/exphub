@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-from typing import Optional
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -9,44 +7,6 @@ from plotly.subplots import make_subplots
 from exphub.download.experiment import Experiment
 
 
-@dataclass
-class Grouping:
-    """
-    A class representing a grouping configuration for the SeriesWizard.
-
-    Attributes:
-        df_hyperparams (pd.DataFrame): A DataFrame containing the hyperparameters.
-        col (str): The column name to group by.
-        short_col_name (Optional[str]): The short column name for display purposes. Defaults to None.
-    """
-    df_hyperparams: pd.DataFrame
-    col: str
-    short_col_name: Optional[str] = None
-
-
-@dataclass
-class Series:
-    """
-    A class representing a series to be visualized in the SeriesWizard.
-
-    Attributes:
-        df (pd.DataFrame): A DataFrame containing the series data.
-        subtitle (str): The subtitle for the series.
-        yaxis_title (Optional[str]): The y-axis title. Defaults to None.
-        xaxis_title (str): The x-axis title. Defaults to 'Step'.
-        aggregators_title (str): The title for the aggregators. Defaults to 'Aggregators'.
-        _metric_name (Optional[str]): The metric name. Defaults to None.
-        smoothing (int): The smoothing factor for the series. Defaults to 1.
-    """
-    df: pd.DataFrame
-    subtitle: str
-    yaxis_title: Optional[str] = None
-    xaxis_title: str = 'Step'
-    aggregators_title: str = 'Aggregators'
-    _metric_name: Optional[str] = None
-    smoothing: int = 1
-
-
 class Wizard(ABC):
     """
     An abstract base class for creating wizards to render various visualizations.
@@ -54,15 +14,36 @@ class Wizard(ABC):
 
     @abstractmethod
     def render(self, **kwargs):
+        """
+        Renders the visualization. This method should be implemented by subclasses.
+
+        :param kwargs: Optional keyword arguments specific to each subclass.
+        """
         pass
 
 
 class TableWizard(Wizard):
+    """
+    A wizard class for rendering tables with custom styling. This class is used for visualizing
+    experiment data by applying different background colors to attributes and series in the table.
+    """
 
     def __init__(self, experiment: Experiment):
+        """
+        Initializes the TableWizard with the given experiment.
+
+        :param experiment: The experiment object containing data to be visualized.
+        """
         self.experiment = experiment
 
     def render(self, attributes_color: str = '#211b1b', series_color: str = '#022b11'):
+        """
+        Renders the table with the specified background colors for attributes and series.
+
+        :param attributes_color: The background color to be applied to attribute names. Default is '#211b1b'.
+        :param series_color: The background color to be applied to series names. Default is '#022b11'.
+        :return: The styled table with the specified background colors applied.
+        """
         return self.experiment.params.style.set_properties(
             **{
                 'background-color': attributes_color
@@ -71,11 +52,25 @@ class TableWizard(Wizard):
 
 
 class SeriesWizard(Wizard):
+    """
+    A wizard class for rendering line plots of time series data from experiments. This class is used
+    for visualizing experiment data by plotting single or multiple series on a line chart or subplots.
+    """
 
     def __init__(self, experiment: Experiment):
+        """
+        Initializes the SeriesWizard with the given experiment.
+
+        :param experiment: The experiment object containing data to be visualized.
+        """
         self.experiment = experiment
 
     def render(self):
+        """
+        Renders the line plot visualization for single or multiple series.
+
+        :return: A plotly figure containing the line plot(s) of the time series data.
+        """
         if len(self.experiment.series_names) == 0:
             raise ValueError('No series to plot.')
 
