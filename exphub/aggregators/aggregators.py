@@ -100,6 +100,7 @@ class Vault:
     class attributes.
     """
     MEAN = AggregatorChain([Aggregator(lambda x: x.mean(axis=1, numeric_only=True), 'mean')])
+    _NO_AGGR = AggregatorChain([Aggregator(lambda x: x.mean(axis=1, numeric_only=True), 'no_aggr')])
     MEAN_STD = AggregatorChain([
         Aggregator(lambda df: df.mean(axis=1, numeric_only=True), 'mean'),
         Aggregator(lambda df: df.mean(axis=1, numeric_only=True) - df.std(axis=1), 'mean_std_minus'),
