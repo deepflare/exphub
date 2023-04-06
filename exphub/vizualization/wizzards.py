@@ -90,18 +90,26 @@ class SeriesWizard(Wizard):
     def _render_single_series(self):
         fig = go.Figure()
         metric_name = self._infer_metric_name(self.experiment.series_names[0])
-                
+
         xaxis_title = 'step'
         yaxis_title = metric_name
         title = f'{yaxis_title} per {xaxis_title}'
         
+        traces = self._generate_traces(self.experiment.series[self.experiment.series_names[0]])
+        
         # subtitle = 
-        fig.add_traces(go_figs)
+        fig.add_traces(traces)
         fig.update_layout(
             title=title,
             xaxis_title=xaxis_title,
             yaxis_title=metric_name,
             legend_title='runs')
+    
+    def _generate_traces(self, series: pd.DataFrame):
+        traces = []
+        for run_id in series.columns:
+            traces.append(go.Scatter(x=series.index, y=series[run_id], name=run_id))
+        return traces
     
     def _render_multiple_series(self):
         pass
