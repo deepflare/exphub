@@ -78,11 +78,11 @@ class NeptuneDownloader(Downloader):
         return Experiment(df_meta, dfs_series)
 
     def _download_series(self,
-                        series_column: Union[List[str], str],
-                        id: Optional[Union[str, List[str]]] = None,
-                        state: Optional[Union[str, List[str]]] = None,
-                        owner: Optional[Union[str, List[str]]] = None,
-                        tag: Optional[Union[str, List[str]]] = None) -> pd.DataFrame:
+                         series_column: Union[List[str], str],
+                         id: Optional[Union[str, List[str]]] = None,
+                         state: Optional[Union[str, List[str]]] = None,
+                         owner: Optional[Union[str, List[str]]] = None,
+                         tag: Optional[Union[str, List[str]]] = None) -> pd.DataFrame:
         """
         Downloads a specified series of data from Neptune.ai based on filtering criteria.
 

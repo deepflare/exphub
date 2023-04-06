@@ -17,7 +17,7 @@ class Experiment:
     series: field(default_factory=dict)  # metric_name -> df
 
     def __str__(self) -> str:
-        return f'Experiment Instance\n{len(self.params)} parameters: {self.params_names}\n including...\n\t * Attributes: {self.attributes_names}\n\t * Series: {self.series_names}'
+        return f'Experiment Instance\n{len(self.params_names)} parameters: {self.params_names}\n including...\n\t * Attributes: {self.attributes_names}\n\t * Series: {self.series_names}'
 
     def subset_params(self, params_names_to_keep: List[str]) -> 'Experiment':
         """
