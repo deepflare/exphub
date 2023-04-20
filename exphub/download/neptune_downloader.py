@@ -177,11 +177,18 @@ class NeptuneDownloaderParentExpLinked(NeptuneDownloader):
         parent_experiment.params = parent_experiment.params.add_prefix('parent/')
         parent_experiment.series = {k: v.add_prefix('parent/') for k, v in parent_experiment.series.items()}
 
-        return Experiment(
-            pd.concat([current_experiment.params, parent_experiment.params], axis=1), {
-                **current_experiment.series,
-                **parent_experiment.series
-            })
+        print(f'parent experiment cols: {parent_experiment.params.columns}')
+        print(f'current experiment cols: {current_experiment.params.columns}')
+
+        print(f'ids of parent experiment: {parent_experiment.params["parent/id"].values.tolist()}')
+        print(f'ids of current experiment: {current_experiment.params["id"].values.tolist()}')
+
+        # Merge params of current experiment and parent experiment by equality of id and parent/id
+        new_params = current_experiment.params.merge(
+            parent_experiment.params, left_on=[self.param_name_of_parent_exp_id], right_on=['parent/id'])
+
+        # TODO: support merging series
+        return Experiment(new_params, current_experiment.series)
 
     def _download_parent_experiment(self, current_experiment, attributes_parent: List[str], series_parent: List[str]):
         """
@@ -196,4 +203,5 @@ class NeptuneDownloaderParentExpLinked(NeptuneDownloader):
             Experiment: The parent experiment data.
         """
         parent_experiment_id = current_experiment.params[self.param_name_of_parent_exp_id].values.tolist()
+        print(f'Downloading parent experiment {parent_experiment_id}...')
         return super().download(id=parent_experiment_id, attributes=attributes_parent, series=series_parent)
