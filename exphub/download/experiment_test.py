@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+import numpy as np
 from exphub.download.experiment import Experiment
 
 # Create a sample Experiment instance for testing
@@ -130,3 +131,84 @@ def test_without2(params_names_to_drop, expected_columns):
     result = sample_experiment.without(params_names_to_drop)
     assert len(result.params.columns) == len(expected_columns)
     assert set(result.params.columns) == set(expected_columns)
+
+
+def create_test_experiment():
+    params = pd.DataFrame({'param1': [1, 2], 'param2': [3, 4]})
+    series = {'metric1': pd.DataFrame({'value': [5, 6]}), 'metric2': pd.DataFrame({'value': [7, 8]})}
+    return Experiment(params, series)
+
+
+def test_merge_success():
+    exp1 = create_test_experiment()
+    exp2 = create_test_experiment()
+
+    merged_exp = exp1.merge(exp2)
+
+    assert len(merged_exp.params) == 4
+    assert len(merged_exp.series['metric1']) == 4
+    assert len(merged_exp.series['metric2']) == 4
+
+
+def test_merge_failure_different_params():
+    exp1 = create_test_experiment()
+
+    params = pd.DataFrame({'param3': [1, 2], 'param4': [3, 4]})
+    series = {'metric1': pd.DataFrame({'value': [5, 6]}), 'metric2': pd.DataFrame({'value': [7, 8]})}
+    exp2 = Experiment(params, series)
+
+    with pytest.raises(ValueError) as excinfo:
+        exp1.merge(exp2)
+
+    assert "Cannot merge experiments with different parameters" in str(excinfo.value)
+
+
+def test_merge_correct_dfs():
+    exp1 = create_test_experiment()
+    exp2 = create_test_experiment()
+
+    merged_exp = exp1.merge(exp2)
+
+    # Check if params DataFrame is correct
+    expected_params = pd.DataFrame({'param1': [1, 2, 1, 2], 'param2': [3, 4, 3, 4]})
+
+    pd.testing.assert_frame_equal(merged_exp.params.reset_index(drop=True), expected_params.reset_index(drop=True))
+
+    # Check if metric1 DataFrame is correct
+    expected_metric1 = pd.DataFrame({'value': [5, 6, 5, 6]})
+    pd.testing.assert_frame_equal(merged_exp.series['metric1'].reset_index(drop=True),
+                                  expected_metric1.reset_index(drop=True))
+
+    # Check if metric2 DataFrame is correct
+    expected_metric2 = pd.DataFrame({'value': [7, 8, 7, 8]})
+    pd.testing.assert_frame_equal(merged_exp.series['metric2'].reset_index(drop=True),
+                                  expected_metric2.reset_index(drop=True))
+
+
+def create_test_experiment_with_nan():
+    params = pd.DataFrame({
+        'id': [0, 1],
+        'param1': [1, 2],
+        'param2': [3, 4],
+        'metric1': [5, float('nan')],
+        'metric2': [7, 8]
+    })
+    series = {}
+    return Experiment(params, series)
+
+
+def test_drop_runs_with_nan():
+    exp = create_test_experiment_with_nan()
+    exp_no_nan = exp.drop_runs_with_nan()
+
+    # Check if the resulting Experiment has the correct number of runs
+    assert len(exp_no_nan.params) == 1
+
+    # Check if the remaining run has the correct ID
+    assert exp_no_nan.params['id'].iloc[0] == 0
+
+    # Check if the remaining run has the correct values
+    assert exp_no_nan.params['param1'].iloc[0] == 1
+    assert exp_no_nan.params['param2'].iloc[0] == 3
+    assert exp_no_nan.params['metric1'].iloc[0] == 5
+    assert exp_no_nan.params['metric2'].iloc[0] == 7

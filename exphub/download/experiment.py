@@ -160,3 +160,30 @@ class Experiment:
         splits = {k: v for k, v in splits.items() if len(v.params) > 0}
 
         return splits
+
+    def merge(self, other: 'Experiment') -> 'Experiment':
+        """
+        Merges the experiment with another experiment.
+
+        Args:
+            other (Experiment): The experiment to merge with.
+
+        Returns:
+            Experiment: A new Experiment instance with merged parameters and series.
+        """
+        if self.params_names != other.params_names:
+            raise ValueError(
+                f'Cannot merge experiments with different parameters. Parameters are {self.params_names} and {other.params_names}'
+            )
+
+        new_params = pd.concat([self.params, other.params])
+        new_series = {s: pd.concat([self.series[s], other.series[s]]) for s in self.series_names}
+
+        return Experiment(new_params, new_series)
+
+    def drop_runs_with_nan(self) -> 'Experiment':
+        """
+        Drops all runs that have NaN values in any of the series params.
+        """
+
+        return self.filter_via_hyperparams([lambda df: ~df.isnull().any(axis=1)])
