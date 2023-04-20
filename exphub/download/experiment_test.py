@@ -183,3 +183,32 @@ def test_merge_correct_dfs():
     expected_metric2 = pd.DataFrame({'value': [7, 8, 7, 8]})
     pd.testing.assert_frame_equal(merged_exp.series['metric2'].reset_index(drop=True),
                                   expected_metric2.reset_index(drop=True))
+
+
+def create_test_experiment_with_nan():
+    params = pd.DataFrame({
+        'id': [0, 1],
+        'param1': [1, 2],
+        'param2': [3, 4],
+        'metric1': [5, float('nan')],
+        'metric2': [7, 8]
+    })
+    series = {}
+    return Experiment(params, series)
+
+
+def test_drop_runs_with_nan():
+    exp = create_test_experiment_with_nan()
+    exp_no_nan = exp.drop_runs_with_nan()
+
+    # Check if the resulting Experiment has the correct number of runs
+    assert len(exp_no_nan.params) == 1
+
+    # Check if the remaining run has the correct ID
+    assert exp_no_nan.params['id'].iloc[0] == 0
+
+    # Check if the remaining run has the correct values
+    assert exp_no_nan.params['param1'].iloc[0] == 1
+    assert exp_no_nan.params['param2'].iloc[0] == 3
+    assert exp_no_nan.params['metric1'].iloc[0] == 5
+    assert exp_no_nan.params['metric2'].iloc[0] == 7

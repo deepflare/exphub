@@ -180,3 +180,10 @@ class Experiment:
         new_series = {s: pd.concat([self.series[s], other.series[s]]) for s in self.series_names}
 
         return Experiment(new_params, new_series)
+
+    def drop_runs_with_nan(self) -> 'Experiment':
+        """
+        Drops all runs that have NaN values in any of the series params.
+        """
+
+        return self.filter_via_hyperparams([lambda df: ~df.isnull().any(axis=1)])
