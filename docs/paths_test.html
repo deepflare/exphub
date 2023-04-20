@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>paths_test.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>paths_test.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">exphub.utils.paths</span> <span class="kn">import</span> <span class="n">shorten_paths</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span>
+    <span class="s2">&quot;paths,expected&quot;</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;/a/b/c/d&quot;</span><span class="p">,</span> <span class="s2">&quot;/a/b/c/e&quot;</span><span class="p">],</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;/a/b/c/d&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;/a/b/c/e&quot;</span><span class="p">:</span> <span class="s2">&quot;e&quot;</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;/a/b/c/d&quot;</span><span class="p">,</span> <span class="s2">&quot;/a/b/c/e&quot;</span><span class="p">,</span> <span class="s2">&quot;/a/b/c/f&quot;</span><span class="p">],</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;/a/b/c/d&quot;</span><span class="p">:</span> <span class="s2">&quot;d&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;/a/b/c/e&quot;</span><span class="p">:</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;/a/b/c/f&quot;</span><span class="p">:</span> <span class="s2">&quot;f&quot;</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;/a/b/c/d/e&quot;</span><span class="p">,</span> <span class="s2">&quot;/a/b/c/e&quot;</span><span class="p">],</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;/a/b/c/d/e&quot;</span><span class="p">:</span> <span class="s2">&quot;d/e&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;/a/b/c/e&quot;</span><span class="p">:</span> <span class="s2">&quot;c/e&quot;</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+        <span class="p">(</span>
+            <span class="p">[</span><span class="s2">&quot;/a/b/c/d/e&quot;</span><span class="p">,</span> <span class="s2">&quot;/a/b/c/d/f&quot;</span><span class="p">,</span> <span class="s2">&quot;/a/b/c/d/g&quot;</span><span class="p">],</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;/a/b/c/d/e&quot;</span><span class="p">:</span> <span class="s2">&quot;e&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;/a/b/c/d/f&quot;</span><span class="p">:</span> <span class="s2">&quot;f&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;/a/b/c/d/g&quot;</span><span class="p">:</span> <span class="s2">&quot;g&quot;</span>
+            <span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_shorten_paths</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">expected</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">shorten_paths</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="n">expected</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html;charset=utf-8">
+  <title>paths.py</title>
+  <link rel="stylesheet" href="pycco.css">
+</head>
+<body>
+<div id='container'>
+  <div id="background"></div>
+  <div class='section'>
+    <div class='docs'><h1>paths.py</h1></div>
+  </div>
+  <div class='clearall'>
+  <div class='section' id='section-0'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-0'>#</a>
+      </div>
+      <p>Find the longest common suffix between the current_path and all other paths in all_paths.</p>
+<p>Args:
+    all_paths (List[str]): A list of all path strings.
+    current_path (str): The path string for which the longest common suffix is calculated.</p>
+<p>Returns:
+    int: The length of the longest common suffix.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">find_longest_common_suffix</span><span class="p">(</span><span class="n">all_paths</span><span class="p">,</span> <span class="n">current_path</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-1'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-1'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">max_common_suffix_length</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">all_paths</span> <span class="k">if</span> <span class="n">path</span> <span class="o">!=</span> <span class="n">current_path</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="n">i</span><span class="p">:]))</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">current_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="n">i</span><span class="p">:])</span>
+               <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span>
+               <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="n">i</span><span class="p">):</span>
+            <span class="n">max_common_suffix_length</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="k">return</span> <span class="n">max_common_suffix_length</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-2'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-2'>#</a>
+      </div>
+      <p>Shorten the input paths by finding the longest common suffix for each path and keeping only the required parts to distinguish between them. Also, return a dictionary mapping the original paths to their shortened versions.</p>
+<p>Args:
+    paths (List[str]): A list of input path strings.</p>
+<p>Returns:
+     Dict[str, str]: A dictionary mapping the original paths to their shortened versions.</p>
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre><span class="k">def</span> <span class="nf">shorten_paths</span><span class="p">(</span><span class="n">paths</span><span class="p">):</span></pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+  <div class='section' id='section-3'>
+    <div class='docs'>
+      <div class='octowrap'>
+        <a class='octothorpe' href='#section-3'>#</a>
+      </div>
+      
+    </div>
+    <div class='code'>
+      <div class="highlight"><pre>    <span class="n">shortened_paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">path_mapping</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+        <span class="n">split_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="n">max_common_suffix_length</span> <span class="o">=</span> <span class="n">find_longest_common_suffix</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">shortened_path</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">split_path</span><span class="p">[</span><span class="o">-</span><span class="n">max_common_suffix_length</span><span class="p">:])</span>
+        <span class="n">shortened_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shortened_path</span><span class="p">)</span>
+        <span class="n">path_mapping</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">shortened_path</span>
+
+    <span class="k">return</span> <span class="n">path_mapping</span>
+
+</pre></div>
+    </div>
+  </div>
+  <div class='clearall'></div>
+</div>
+</body>
