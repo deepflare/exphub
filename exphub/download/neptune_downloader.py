@@ -195,5 +195,5 @@ class NeptuneDownloaderParentExpLinked(NeptuneDownloader):
         Returns:
             Experiment: The parent experiment data.
         """
-        parent_experiment_id = current_experiment.params[self.param_name_of_parent_exp_id].values[0]
+        parent_experiment_id = current_experiment.params[self.param_name_of_parent_exp_id].values.tolist()
         return super().download(id=parent_experiment_id, attributes=attributes_parent, series=series_parent)
