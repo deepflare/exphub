@@ -56,26 +56,26 @@ class NeptuneDownloader(Downloader):
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         columns = [*attributes, *series]
-        df_meta = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
-        dfs_series = {}
+        params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
+        series = {}
         for series_col in series:
-            dfs_series[series_col] = self._download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+            series[series_col] = self._download_series(series_col, id=id, state=state, owner=owner, tag=tag)
 
         self.short_names = short_names
 
         if short_names:
-            # Modify df_meta in place
-            meta_long2short = shorten_paths(df_meta)
-            df_meta.rename(columns=meta_long2short, inplace=True)
+            # Modify params in place
+            meta_long2short = shorten_paths(params)
+            params.rename(columns=meta_long2short, inplace=True)
 
-            # Modify dfs_series in place
+            # Modify series in place
             short_df_series = {}
-            for series_col, df in dfs_series.items():
+            for series_col, df in series.items():
                 long2short = shorten_paths(df)
                 short_df_series[meta_long2short[series_col]] = df.rename(columns=long2short)
-            dfs_series = short_df_series
+            series = short_df_series
 
-        return Experiment(df_meta, dfs_series)
+        return Experiment(params, series)
 
     def _download_series(self,
                          series_column: Union[List[str], str],
@@ -133,3 +133,67 @@ class NeptuneDownloader(Downloader):
             return df
 
         return _fetch_values(series_column)
+
+
+class NeptuneDownloaderParentExpLinked(NeptuneDownloader):
+
+    def __init__(self, project_name: str, api_token: Optional[str] = None, param_name_of_parent_exp_id: str = None):
+        super().__init__(project_name, api_token)
+        self.param_name_of_parent_exp_id = param_name_of_parent_exp_id
+
+    def download(self,
+                 id: Optional[Union[str, List[str]]] = None,
+                 state: Optional[Union[str, List[str]]] = None,
+                 owner: Optional[Union[str, List[str]]] = None,
+                 tag: Optional[Union[str, List[str]]] = None,
+                 attributes: Optional[List[str]] = None,
+                 short_names: bool = True,
+                 series: List[str] = [],
+                 attributes_parent: List[str] = [],
+                 series_parent: List[str] = []) -> Experiment:
+        """
+        Download the experiment data linked to a parent experiment in Neptune and merge the parameters and
+        series from both experiments.
+
+        Args:
+            id (Optional[Union[str, List[str]]]): Experiment ID(s) to download (default: None).
+            state (Optional[Union[str, List[str]]]): Experiment state(s) to download (default: None).
+            owner (Optional[Union[str, List[str]]]): Experiment owner(s) to download (default: None).
+            tag (Optional[Union[str, List[str]]]): Experiment tag(s) to download (default: None).
+            attributes (Optional[List[str]]): Experiment attributes to download (default: None).
+            short_names (bool): Whether to use short names for experiment attributes (default: True).
+            series (List[str]): Series to download for the current experiment (default: []).
+            attributes_parent (List[str]): Parent experiment attributes to download (default: []).
+            series_parent (List[str]): Series to download for the parent experiment (default: []).
+
+        Returns:
+            Experiment: An Experiment object containing the combined parameters and series from the current
+                        and parent experiments.
+        """
+        current_experiment = super().download(id, state, owner, tag, attributes, short_names, series)
+        parent_experiment = self._download_parent_experiment(current_experiment, attributes_parent, series_parent)
+
+        # Collapse params and metrics of parent expeirment into current_experiment, 'parent' namespace
+        parent_experiment.params = parent_experiment.params.add_prefix('parent/')
+        parent_experiment.series = {k: v.add_prefix('parent/') for k, v in parent_experiment.series.items()}
+
+        return Experiment(
+            pd.concat([current_experiment.params, parent_experiment.params], axis=1), {
+                **current_experiment.series,
+                **parent_experiment.series
+            })
+
+    def _download_parent_experiment(self, current_experiment, attributes_parent: List[str], series_parent: List[str]):
+        """
+        Download the parent experiment data using the parent experiment ID from the current experiment.
+
+        Args:
+            current_experiment (Experiment): The current experiment.
+            attributes_parent (List[str]): Parent experiment attributes to download.
+            series_parent (List[str]): Series to download for the parent experiment.
+
+        Returns:
+            Experiment: The parent experiment data.
+        """
+        parent_experiment_id = current_experiment.params[self.param_name_of_parent_exp_id].values.tolist()
+        return super().download(id=parent_experiment_id, attributes=attributes_parent, series=series_parent)
