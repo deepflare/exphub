@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "exphub"
-version = "0.2.1"
+version = "0.2.3"
 description = ""
 authors = ["deepflare <mtyrolski@deepflare.ai>"]
 license = "MIT"
