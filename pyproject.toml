@@ -2,12 +2,12 @@
 name = "exphub"
 version = "0.2.1"
 description = ""
-authors = [""]
+authors = ["deepflare <mtyrolski@deepflare.ai>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.7"
 neptune-client = "^0.16.17"
 plotly = "^5.13.0"
 
