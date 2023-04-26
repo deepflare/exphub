@@ -1,3 +1,4 @@
+import numpy as np
 from exphub.download.downloader import Downloader
 import pandas as pd
 from typing import Optional, Union, List
@@ -57,9 +58,9 @@ class NeptuneDownloader(Downloader):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         columns = [*attributes, *series]
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
-        series = {}
+        series_dict = {}
         for series_col in series:
-            series[series_col] = self._download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+            series_dict[series_col] = self._download_series(series_col, id=id, state=state, owner=owner, tag=tag)
 
         self.short_names = short_names
 
@@ -70,12 +71,12 @@ class NeptuneDownloader(Downloader):
 
             # Modify series in place
             short_df_series = {}
-            for series_col, df in series.items():
+            for series_col, df in series_dict.items():
                 long2short = shorten_paths(df)
                 short_df_series[meta_long2short[series_col]] = df.rename(columns=long2short)
-            series = short_df_series
+            series_dict = short_df_series
 
-        return Experiment(params, series)
+        return Experiment(params, series_dict)
 
     def _download_series(self,
                          series_column: Union[List[str], str],
@@ -126,9 +127,12 @@ class NeptuneDownloader(Downloader):
             if missing == len(ids):
                 raise ValueError(f'No runs have a column named {col_label}')
 
+            # Pad all series to the max length
+            max_len = max([len(value['value']) for value in id2value.values()])
+
             df = pd.DataFrame({})
             for id, value in id2value.items():
-                df[id] = value['value']
+                df[id] = np.pad(value['value'], (0, max_len - len(value['value'])), 'constant', constant_values=np.nan)
 
             return df
 
