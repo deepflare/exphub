@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+import plotly.express as px
 
 from exphub.download.experiment import Experiment
 
@@ -57,13 +57,15 @@ class SeriesWizard(Wizard):
     for visualizing experiment data by plotting single or multiple series on a line chart or subplots.
     """
 
-    def __init__(self, experiment: Experiment):
+    def __init__(self, experiment: Experiment, horizontal: bool = True, show_params: bool = False):
         """
         Initializes the SeriesWizard with the given experiment.
 
         :param experiment: The experiment object containing data to be visualized.
         """
         self.experiment = experiment
+        self.horizontal = horizontal
+        self.show_params = show_params
 
     def render(self):
         """
@@ -101,21 +103,31 @@ class SeriesWizard(Wizard):
         return traces
 
     def _render_multiple_series(self):
-        n_plots = len(self.experiment.series_names)
-        xaxis_title = 'step'
+        to_merge = []
+        for name, s in self.experiment.series.items():
+            s_c = s.copy()
+            s_c['metric'] = name
+            s_c['step'] = s_c.index
+            to_merge.append(s_c)
+        df = pd.concat(to_merge)
+        dff = df.melt(
+            value_vars=df.columns.drop(['step', 'metric']),
+            id_vars=['step', 'metric'],
+            value_name='value',
+            var_name='model')
+        if self.horizontal:
+            fig = px.line(dff, x='step', y='value', facet_col='metric', color='model')
+        else:
+            fig = px.line(dff, x='step', y='value', facet_row='metric', color='model')
 
-        fig = make_subplots(
-            rows=1,
-            cols=n_plots,
-            shared_xaxes=False,
-            shared_yaxes=True,
-            subplot_titles=[f'{metric_name} per step' for metric_name in self.experiment.series_names])
-        grid = [(x, 1) for x in range(1, n_plots + 1)]
-
-        for (x, y), series_name in zip(grid, self.experiment.series_names):
-            traces = self._generate_traces(self.experiment.series[series_name])
-            fig.add_traces(traces, rows=y, cols=x)
-            fig.update_yaxes(title_text=series_name, row=y, col=x)
-            fig.update_xaxes(title_text=xaxis_title, row=y, col=x)
+        if self.show_params:
+            params = self.experiment.params[self.experiment.attributes_names]
+            for i, _ in enumerate(fig.data):
+                row = params[params['id'] == fig.data[i]['name']].iloc[0]
+                new_name = fig.data[i]['name'] + ': '
+                for key, val in row.items():
+                    if key != 'id':
+                        new_name += f'{key}={val}; '
+                fig.data[i]['name'] = new_name
 
         return fig
