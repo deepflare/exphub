@@ -1,16 +1,20 @@
 [tool.poetry]
 name = "exphub"
-version = "0.2.3"
+version = "0.2.4"
 description = ""
 authors = ["deepflare <mtyrolski@deepflare.ai>"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-neptune-client = "^0.16.17"
-plotly = "^5.13.0"
-
+python = "^3.10"
+pandas = "^2.0.3"
+plotly = "^5.15.0"
+matplotlib = "^3.7.2"
+boto3 = "^1.28.21"
+neptune = {version = "^1.5.0rc0", allow-prereleases = true}
+ipykernel = "^6.25.1"
+jinja2 = "^3.1.2"
 
 [build-system]
 requires = ["poetry-core"]

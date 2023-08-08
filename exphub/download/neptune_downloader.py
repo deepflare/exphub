@@ -3,9 +3,9 @@ from exphub.download.downloader import Downloader
 import pandas as pd
 from typing import Optional, Union, List
 import os
-import neptune.new as neptune
+from neptune import Project, Run
+
 from exphub.download.experiment import Experiment
-from exphub.utils.noise import Suppressor
 from exphub.utils.paths import shorten_paths
 
 
@@ -44,7 +44,8 @@ class NeptuneDownloader(Downloader):
         else:
             self.api_token = api_token
             os.environ[NeptuneDownloader.NEPTUNE_API_TOKEN] = api_token
-        self.project = neptune.init_project(project=self.project_name, mode="read-only", api_token=self.api_token)
+        
+        self.project = Project(project=self.project_name, api_token=self.api_token, mode="read-only")
 
     def download(self,
                  id: Optional[Union[str, List[str]]] = None,
@@ -100,13 +101,11 @@ class NeptuneDownloader(Downloader):
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
 
-        ids = self.project.fetch_runs_table(
-            owner=owner, id=id, state=state, tag=tag, columns='sys/id').to_pandas()['sys/id'].values
+        ids = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns='sys/id').to_pandas()['sys/id'].values
 
         # Run initialization
         runs = [
-            Suppressor.exec_no_stdout(
-                neptune.init_run, project=self.project_name, with_id=run_id, mode="read-only", api_token=self.api_token)
+            Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
             for run_id in ids
         ]
 
@@ -120,8 +119,8 @@ class NeptuneDownloader(Downloader):
             missing = 0
             for id, run in zip(ids, runs):
                 try:
-                    id2value[id] = Suppressor.exec_no_stdout(run[col_label].fetch_values, include_timestamp=False)
-                except neptune.exceptions.NeptuneException:
+                    id2value[id] = run[col_label].fetch_values(include_timestamp=False)
+                except KeyError:
                     print(f'[WARNING] Run {id} does not have a column named {col_label}')
                     missing += 1
             if missing == len(ids):
