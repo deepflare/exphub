@@ -19,6 +19,9 @@ class Experiment:
     def __str__(self) -> str:
         return f'Experiment Instance\n{len(self.params_names)} parameters: {self.params_names}\n including...\n\t * Attributes: {self.attributes_names}\n\t * Series: {self.series_names}'
 
+    def __len__(self) -> int:
+        return len(self.params)
+
     def subset_params(self, params_names_to_keep: List[str]) -> 'Experiment':
         """
         Returns a new Experiment instance with a subset of the parameters.
@@ -187,3 +190,10 @@ class Experiment:
         """
 
         return self.filter_via_hyperparams([lambda df: ~df.isnull().any(axis=1)])
+
+    def keep_runs_with_nan(self) -> 'Experiment':
+        """
+        Keeps all runs that have NaN values in any of the series params.
+        """
+
+        return self.filter_via_hyperparams([lambda df: df.isnull().any(axis=1)])
