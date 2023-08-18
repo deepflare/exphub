@@ -1,3 +1,4 @@
+from loguru import logger
 import numpy as np
 from exphub.download.downloader import Downloader
 import pandas as pd
@@ -7,7 +8,7 @@ from neptune import Project, Run
 
 from exphub.download.experiment import Experiment
 from exphub.utils.paths import shorten_paths
-
+import joblib as jl
 
 class NeptuneDownloader(Downloader):
     """
@@ -18,6 +19,7 @@ class NeptuneDownloader(Downloader):
         api_token (Optional[str]): The Neptune API token. If not provided, it should be set as an environment variable.
     """
     NEPTUNE_API_TOKEN = 'NEPTUNE_API_TOKEN'
+    EXPHUB_CACHE = '.exphub_cache'
 
     def __init__(self, project_name: str, api_token: Optional[str] = None):
         """
@@ -46,6 +48,10 @@ class NeptuneDownloader(Downloader):
             os.environ[NeptuneDownloader.NEPTUNE_API_TOKEN] = api_token
         
         self.project = Project(project=self.project_name, api_token=self.api_token, mode="read-only")
+        
+        # Cache setup
+        if not os.path.exists(NeptuneDownloader.EXPHUB_CACHE):
+            os.mkdir(NeptuneDownloader.EXPHUB_CACHE)
 
     def download(self,
                  id: Optional[Union[str, List[str]]] = None,
@@ -54,10 +60,21 @@ class NeptuneDownloader(Downloader):
                  tag: Optional[Union[str, List[str]]] = None,
                  attributes: Optional[List[str]] = None,
                  short_names: bool = True,
-                 series: List[str] = []) -> Experiment:
+                 series: List[str] = [],
+                 force=False) -> Experiment:
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         columns = [*attributes, *series]
+        
+        hsh = tag if tag is not None else 'x'
+        logger.info(f'Hash of columns: {hsh}')
+        logger.info(f'Cache path: {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
+        if (not force) and os.path.exists(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib')):
+            logger.info(f'Loading experiment from cache {hsh}.joblib')
+            logger.warning(f'Loading experiment from cache {hsh}.joblib is based on the columns.\nIf you have new runs with the same columns, please override the cache by using the override_cache argument=True')
+            return jl.load(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
+        else:
+            logger.info(f'No cache found. Downloading experiment from Neptune.ai')
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
         series_dict = {}
         for series_col in series:
@@ -77,7 +94,16 @@ class NeptuneDownloader(Downloader):
                 short_df_series[meta_long2short[series_col]] = df.rename(columns=long2short)
             series_dict = short_df_series
 
-        return Experiment(params, series_dict)
+        # Transformning ids dtype from objects to strings
+        exp = Experiment(params, series_dict)
+        exp.params[exp.id_column_name] = exp.params[exp.id_column_name].astype(str)
+        logger.info(f'dtypes of params: {exp.params.dtypes}')
+        
+        # Cache experiment
+        jl.dump(exp, os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
+        logger.info(f'Experiment cached at {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
+        
+        return exp
 
     def _download_series(self,
                          series_column: Union[List[str], str],

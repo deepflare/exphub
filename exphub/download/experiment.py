@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from itertools import product
 from typing import Dict, List
 import pandas as pd
+from loguru import logger
 
 
 @dataclass
@@ -53,6 +54,8 @@ class Experiment:
         Returns:
             Experiment: A new Experiment instance with a subset of the runs.
         """
+        logger.error(f'Subsetting experiment with {len(runs_ids_to_keep)} runs: {runs_ids_to_keep}')
+        logger.info(f'ids from df {self.params[self.id_column_name]}')
         new_params = self.params[self.params[self.id_column_name].isin(runs_ids_to_keep)]
         new_series = {s: self.series[s][runs_ids_to_keep] for s in self.series_names}
 
