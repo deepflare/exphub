@@ -747,13 +747,13 @@ files = [
 
 [[package]]
 name = "neptune"
-version = "1.5.0"
+version = "1.6.0"
 description = "Neptune Client"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "neptune-1.5.0-py3-none-any.whl", hash = "sha256:e0d150febcaa2fa516c17cdb37066bcbfd1528c1898b0cf638e6d6742b8f2ff5"},
-    {file = "neptune-1.5.0.tar.gz", hash = "sha256:677c14c242609e76de9577d2c9e9f6aa41a8bdc473a01db55ef34e3c154a9d2a"},
+    {file = "neptune-1.6.0-py3-none-any.whl", hash = "sha256:355bbb0a3e353e4c66f39c2c5bf9b0bc547ceba583d38c6c76618e4acde1450f"},
+    {file = "neptune-1.6.0.tar.gz", hash = "sha256:b3ca24e81bd0ebdbc27a93a7274263570f834a97f808fe06ba9e863c098a24a9"},
 ]
 
 [package.dependencies]
@@ -1608,4 +1608,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "3.10.10"
-content-hash = "666a031051c953e64e998c4c54acf7b12720a3484af99013d0633452bdd4e423"
+content-hash = "013e2ae377cd3f3aa98619f0bc1ee3cd9f711873c465b2c908396d3040d86499"

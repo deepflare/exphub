@@ -66,15 +66,15 @@ class NeptuneDownloader(Downloader):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         columns = [*attributes, *series]
         
-        hsh = tag if tag is not None else 'x'
-        logger.info(f'Hash of columns: {hsh}')
-        logger.info(f'Cache path: {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
-        if (not force) and os.path.exists(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib')):
-            logger.info(f'Loading experiment from cache {hsh}.joblib')
-            logger.warning(f'Loading experiment from cache {hsh}.joblib is based on the columns.\nIf you have new runs with the same columns, please override the cache by using the override_cache argument=True')
-            return jl.load(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
-        else:
-            logger.info(f'No cache found. Downloading experiment from Neptune.ai')
+        # hsh = tag if tag is not None else 'x'
+        # logger.info(f'Hash of columns: {hsh}')
+        # logger.info(f'Cache path: {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
+        # if (not force) and os.path.exists(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib')):
+        #     logger.info(f'Loading experiment from cache {hsh}.joblib')
+        #     logger.warning(f'Loading experiment from cache {hsh}.joblib is based on the columns.\nIf you have new runs with the same columns, please override the cache by using the override_cache argument=True')
+        #     return jl.load(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
+        # else:
+        #     logger.info(f'No cache found. Downloading experiment from Neptune.ai')
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
         series_dict = {}
         for series_col in series:
@@ -100,8 +100,8 @@ class NeptuneDownloader(Downloader):
         logger.info(f'dtypes of params: {exp.params.dtypes}')
         
         # Cache experiment
-        jl.dump(exp, os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
-        logger.info(f'Experiment cached at {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
+        # jl.dump(exp, os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
+        # logger.info(f'Experiment cached at {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
         
         return exp
 
