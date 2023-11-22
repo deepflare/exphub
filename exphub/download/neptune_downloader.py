@@ -2,13 +2,16 @@ from loguru import logger
 import numpy as np
 from exphub.download.downloader import Downloader
 import pandas as pd
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Tuple
 import os
 from neptune import Project, Run
 
 from exphub.download.experiment import Experiment
 from exphub.utils.paths import shorten_paths
 import joblib as jl
+
+from neptune.exceptions import TypeDoesNotSupportAttributeException, MissingFieldException
+
 
 class NeptuneDownloader(Downloader):
     """
@@ -53,6 +56,33 @@ class NeptuneDownloader(Downloader):
         if not os.path.exists(NeptuneDownloader.EXPHUB_CACHE):
             os.mkdir(NeptuneDownloader.EXPHUB_CACHE)
 
+    def _filter_ids_and_params(self, 
+                            ids: List[str], 
+                            params: pd.DataFrame,
+                            required_columns: List[str]
+                            ) -> Tuple[List[str], pd.DataFrame]:
+        runs = [
+            Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
+            for run_id in ids
+        ]
+
+        ret_ids = []
+        for id_, run in zip(ids, runs):
+            remove = False
+            for col_label in required_columns:
+                try:
+                    run[col_label].fetch_last()
+                except (KeyError, TypeDoesNotSupportAttributeException, MissingFieldException):
+                    remove = True
+                    break
+
+            if not remove:
+                ret_ids.append(id_)
+
+        params = params[params['sys/id'].isin(ret_ids)]
+
+        return ret_ids, params
+
     def download(self,
                  id: Optional[Union[str, List[str]]] = None,
                  state: Optional[Union[str, List[str]]] = None,
@@ -61,7 +91,8 @@ class NeptuneDownloader(Downloader):
                  attributes: Optional[List[str]] = None,
                  short_names: bool = True,
                  series: List[str] = [],
-                 force=False) -> Experiment:
+                 force=False,
+                 required_columns: Optional[List[str]] = None,) -> Experiment:
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         columns = [*attributes, *series]
@@ -76,9 +107,14 @@ class NeptuneDownloader(Downloader):
         # else:
         #     logger.info(f'No cache found. Downloading experiment from Neptune.ai')
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
+        ids = params['sys/id'].values
+
+        if required_columns is not None:
+            ids, params = self._filter_ids_and_params(ids, params, required_columns)
+
         series_dict = {}
         for series_col in series:
-            series_dict[series_col] = self._download_series(series_col, id=id, state=state, owner=owner, tag=tag)
+            series_dict[series_col] = self._download_series(series_col, ids)
 
         self.short_names = short_names
 
@@ -107,29 +143,17 @@ class NeptuneDownloader(Downloader):
 
     def _download_series(self,
                          series_column: Union[List[str], str],
-                         id: Optional[Union[str, List[str]]] = None,
-                         state: Optional[Union[str, List[str]]] = None,
-                         owner: Optional[Union[str, List[str]]] = None,
-                         tag: Optional[Union[str, List[str]]] = None) -> pd.DataFrame:
+                         ids: List[str]) -> pd.DataFrame:
         """
         Downloads a specified series of data from Neptune.ai based on filtering criteria.
 
         Args:
             series_column (Union[List[str], str]): The name of the series to download.
-            id (Optional[Union[str, List[str]]]): The run ID(s) to filter by.
-            state (Optional[Union[str, List[str]]]): The run state(s) to filter by.
-            owner (Optional[Union[str, List[str]]]): The run owner(s) to filter by.
-            tag (Optional[Union[str, List[str]]]): The run tag(s) to filter by.
+            id (List[str]): The run IDs to download.
 
         Returns:
             pd.DataFrame: A pandas DataFrame containing the downloaded series data.
         """
-        if all([id is None, state is None, owner is None, tag is None]):
-            raise ValueError('At least one of id, state, owner, or tag must be provided.')
-
-        # Fetching run IDs
-        table = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns='sys/id').to_pandas()
-        ids = table['sys/id'].values
 
         # Run initialization
         runs = [
@@ -148,7 +172,7 @@ class NeptuneDownloader(Downloader):
             for id, run in zip(ids, runs):
                 try:
                     id2value[id] = run[col_label].fetch_values(include_timestamp=False)
-                except KeyError:
+                except (KeyError, TypeDoesNotSupportAttributeException):
                     print(f'[WARNING] Run {id} does not have a column named {col_label}')
                     missing += 1
             if missing == len(ids):
