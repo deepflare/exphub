@@ -60,6 +60,9 @@ class NeptuneDownloader(Downloader):
                             params: pd.DataFrame,
                             required_columns: List[str]
                             ) -> Tuple[List[str], pd.DataFrame]:
+        """
+        Filters out ids and params of runs that do not have all required_columns.
+        """
         runs = [
             Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
             for run_id in ids
@@ -70,6 +73,7 @@ class NeptuneDownloader(Downloader):
             remove = False
             for col_label in required_columns:
                 try:
+                    # I don't know of a better way to check if a column exists
                     run[col_label].fetch_last()
                 except (KeyError, TypeDoesNotSupportAttributeException, MissingFieldException):
                     remove = True
