@@ -8,7 +8,6 @@ from neptune import Project, Run
 
 from exphub.download.experiment import Experiment
 from exphub.utils.paths import shorten_paths
-import joblib as jl
 
 from neptune.exceptions import TypeDoesNotSupportAttributeException, MissingFieldException
 
@@ -91,21 +90,11 @@ class NeptuneDownloader(Downloader):
                  attributes: Optional[List[str]] = None,
                  short_names: bool = True,
                  series: List[str] = [],
-                 force=False,
                  required_columns: Optional[List[str]] = None,) -> Experiment:
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
         columns = [*attributes, *series]
         
-        # hsh = tag if tag is not None else 'x'
-        # logger.info(f'Hash of columns: {hsh}')
-        # logger.info(f'Cache path: {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
-        # if (not force) and os.path.exists(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib')):
-        #     logger.info(f'Loading experiment from cache {hsh}.joblib')
-        #     logger.warning(f'Loading experiment from cache {hsh}.joblib is based on the columns.\nIf you have new runs with the same columns, please override the cache by using the override_cache argument=True')
-        #     return jl.load(os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
-        # else:
-        #     logger.info(f'No cache found. Downloading experiment from Neptune.ai')
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
         ids = params['sys/id'].values
 
@@ -134,10 +123,6 @@ class NeptuneDownloader(Downloader):
         exp = Experiment(params, series_dict)
         exp.params[exp.id_column_name] = exp.params[exp.id_column_name].astype(str)
         logger.info(f'dtypes of params: {exp.params.dtypes}')
-        
-        # Cache experiment
-        # jl.dump(exp, os.path.join(NeptuneDownloader.EXPHUB_CACHE, f'{hsh}.joblib'))
-        # logger.info(f'Experiment cached at {os.path.join(NeptuneDownloader.EXPHUB_CACHE, f"{hsh}.joblib")}')
         
         return exp
 
