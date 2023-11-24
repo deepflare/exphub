@@ -97,7 +97,11 @@ class NeptuneDownloader(Downloader):
                  required_columns: Optional[List[str]] = None,) -> Experiment:
         if all([id is None, state is None, owner is None, tag is None]):
             raise ValueError('At least one of id, state, owner, or tag must be provided.')
-        columns = [*attributes, *series]
+        
+        if attributes is None:
+            columns = None
+        else:
+            columns = [*attributes, *series]
         
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
         ids = params['sys/id'].values
