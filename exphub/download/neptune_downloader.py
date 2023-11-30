@@ -7,6 +7,7 @@ import os
 from neptune import Project, Run
 
 from exphub.download.experiment import Experiment
+from exphub.utils.logging import StdoutToLoguru
 from exphub.utils.paths import shorten_paths
 
 from neptune.exceptions import TypeDoesNotSupportAttributeException, MissingFieldException
@@ -63,10 +64,11 @@ class NeptuneDownloader(Downloader):
         """
         Filters out ids and params of runs that do not have all required_columns.
         """
-        runs = [
-            Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
-            for run_id in ids
-        ]
+        with StdoutToLoguru():
+            runs = [
+                Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
+                for run_id in ids
+            ]
 
         ret_ids = []
         for id_, run in zip(ids, runs):
@@ -147,12 +149,12 @@ class NeptuneDownloader(Downloader):
         Returns:
             pd.DataFrame: A pandas DataFrame containing the downloaded series data.
         """
-
         # Run initialization
-        runs = [
-            Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
-            for run_id in ids
-        ]
+        with StdoutToLoguru():
+            runs = [
+                Run(run_id, project=self.project_name, api_token=self.api_token, mode="read-only")
+                for run_id in ids
+            ]
 
         def _fetch_values(col_label):
             if isinstance(col_label, list):
