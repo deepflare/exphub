@@ -176,10 +176,9 @@ class NeptuneDownloader(Downloader):
             # Pad all series to the max length
             max_len = max([len(value['value']) for value in id2value.values()])
 
-            df = pd.DataFrame({})
-            for id, value in id2value.items():
-                df[id] = np.pad(value['value'], (0, max_len - len(value['value'])), 'constant', constant_values=np.nan)
-
+            df_dict = {id : np.pad(value['value'], (0, max_len - len(value['value'])), 'constant', constant_values=np.nan) for id, value in id2value.items()}
+            df = pd.DataFrame(df_dict)
+        
             return df
 
         return _fetch_values(series_column)
