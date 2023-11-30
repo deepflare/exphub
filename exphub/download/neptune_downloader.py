@@ -106,6 +106,7 @@ class NeptuneDownloader(Downloader):
             columns = [*attributes, *series]
         
         params = self.project.fetch_runs_table(owner=owner, id=id, state=state, tag=tag, columns=columns).to_pandas()
+        assert len(params) > 0, "No experiments found"
         ids = params['sys/id'].values
 
         if required_columns is not None:
